@@ -1,3 +1,4 @@
+"""Money tracker: chat + dashboard + table + who-owes-who, in one Streamlit app."""
 import hmac
 import time
 from datetime import timedelta
@@ -15,11 +16,12 @@ from config import BUDGET_KEYS, CATEGORIES, inr, today
 
 st.set_page_config(page_title="Money", page_icon="💸", layout="centered",
                    initial_sidebar_state="collapsed")
-st.markdown("<style>.block-container{padding-top:1.2rem;padding-bottom:6rem;}</style>",
+# Leave room for Streamlit's fixed header bar (it is ~3.75rem tall) so it never covers the tabs.
+st.markdown("<style>.block-container{padding-top:4.5rem;padding-bottom:6rem;}</style>",
             unsafe_allow_html=True)
 
 
-#login
+# ------------------------------------------------------------------ login
 def require_login():
     pw = config.get_secret("APP_PASSWORD")
     if not pw:
@@ -64,7 +66,7 @@ def flash_here():
         st.success(msg)
 
 
-#cached reads
+# ------------------------------------------------------------------ cached reads
 @st.cache_data(ttl=60, show_spinner=False)
 def header_totals(day):
     with db.connect() as conn:
@@ -95,7 +97,7 @@ def load_dashboard(month_start):
         }
 
 
-#chat page
+# ------------------------------------------------------------------ chat page
 WELCOME = ("Hi! Tell me what you spent, like `200 food` or `coffee 150 yesterday`. "
            "You can also say things like *paid 3000 for dinner with Rahul and Priya*. "
            "Type `help` to see everything I understand.")
@@ -148,7 +150,7 @@ def page_chat():
         st.rerun()
 
 
-#dashboard page
+# ------------------------------------------------------------------ dashboard page
 def _style(fig, h=280):
     fig.update_layout(margin=dict(l=0, r=0, t=10, b=0), height=h, xaxis_title=None,
                       yaxis_title=None, legend=dict(orientation="h", y=-0.15))
@@ -234,7 +236,7 @@ def page_dashboard():
             st.rerun()
 
 
-#table page
+# ------------------------------------------------------------------ table page
 def page_table():
     flash_here()
     t = today()
@@ -282,7 +284,7 @@ def page_table():
     b2.download_button("Download CSV", csv, "expenses.csv", "text/csv", use_container_width=True)
 
 
-#owed page
+# ------------------------------------------------------------------ owed page
 def page_owed():
     flash_here()
     with db.connect() as conn:
@@ -311,8 +313,8 @@ def page_owed():
             st.dataframe(ledger, hide_index=True, width="stretch")
 
 
-#router
-PAGES = {"💬 Chat": page_chat, "📊 Dashboard": page_dashboard,
+# ------------------------------------------------------------------ router
+PAGES = {"💬 Chat": page_chat, "📊 Stats": page_dashboard,
          "🧾 Table": page_table, "🤝 Owed": page_owed}
 choice = st.radio("Page", list(PAGES), horizontal=True, label_visibility="collapsed", key="nav")
 try:
